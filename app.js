@@ -45,7 +45,7 @@ app.use(function (err, req, res, next) {
         status: status,
         message: http.STATUS_CODES[status],
         error: err.message,
-        stacktrace: {}
+        stacktrace: err.stack
     }));
 });
 
