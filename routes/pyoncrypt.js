@@ -268,4 +268,22 @@ router.post('/encode', function (req, res, next) {
     res.send(pyonize(encrypt(serialize(text), pass)));
 });
 
+router.post('/decode', function (req, res, next) {
+    var error = null;
+    if (!req.body || !req.body.text) {
+        error = new Error('You must specify text parameter');
+        error.status = 422;
+        return next(error);
+    } else if (!req.body.pass) {
+        error = new Error('Oh fucking script-kiddie nerds, sad to say that you need `pass` parameter to decrypt text pyonpyon!')
+        error.status = 422;
+        return next(error);
+    }
+
+    var text = req.body.text;
+    var pass = req.body.pass;
+
+    res.send(text);
+});
+
 module.exports = router;
