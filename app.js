@@ -12,6 +12,9 @@ var route = {
 
 var app = express();
 
+app.set('views', __dirname + '/views');
+app.engine('html', require('ejs').renderFile);
+
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('combined'));
