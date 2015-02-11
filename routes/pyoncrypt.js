@@ -232,6 +232,29 @@ function substitutionPermutation(buf) {
     return dest;
 }
 
+var pyonTokens = ['ぴょん', 'ぴょ', 'ぴょーん', 'ぴょこ'];
+var delimiterTokens = ['、', '。', '! ', '? '];
+var finalDelimiterTokens = ['…', '。', '!!!!', '!?'];
+
+function pyonize(buf) {
+    var pyonString = '';
+
+    for (var ptr = 0; ptr < buf.length; ptr += 2) {
+        var isFinal = (ptr + 2) >= buf.length;
+        var block = buf.readUInt16BE(ptr);
+
+        for (var i = 0; i < 7; i++) {
+            var number = block >> ((7 - i) * 2) & 0x03;
+            pyonString += pyonTokens[number];
+        }
+
+        var lastNumber = block & 0x03;
+        pyonString += (isFinal ? finalDelimiterTokens : delimiterTokens)[lastNumber];
+    }
+
+    return pyonString;
+}
+
 router.post('/encode', function (req, res, next) {
     if (!req.body || !req.body.text) {
         var err = new Error('You must specify text parameter');
@@ -242,7 +265,7 @@ router.post('/encode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass || config.defaultPass;
 
-    res.send(encrypt(serialize(text), pass).toJSON());
+    res.send(pyonize(encrypt(serialize(text), pass)));
 });
 
 module.exports = router;
