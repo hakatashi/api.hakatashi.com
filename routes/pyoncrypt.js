@@ -144,7 +144,7 @@ BitQueue.prototype.pushBuffer = function (buf) {
     return this;
 };
 
-BitQueue.prototype.popInt = function (bit) {
+BitQueue.prototype.shiftInt = function (bit) {
     var popByte = Math.floor(this._ptr / 8);
     var popByteEnd = Math.ceil((this._ptr + bit) / 8);
 
@@ -221,7 +221,7 @@ function deserialize(buf) {
     var tokens = [];
 
     while (queue.length >= 6) {
-        var idx = queue.popInt(6);
+        var idx = queue.shiftInt(6);
         tokens.push(deserializationTable[idx]);
     }
 
