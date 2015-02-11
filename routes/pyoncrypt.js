@@ -5,6 +5,20 @@ var router = express.Router();
 
 var config = require('../config.json').pyoncrypt;
 
+// String.prototype.startsWith polyfill
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
+if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: function(searchString, position) {
+            position = position || 0;
+            return this.lastIndexOf(searchString, position) === position;
+        }
+    });
+}
+
 var VOICED = 65536;
 var SEMIVOICED = 65537;
 var ALTER = 65538;
@@ -255,6 +269,48 @@ function pyonize(buf) {
     return pyonString;
 }
 
+function depyonize(pyonString) {
+    var dest = new BitArray();
+
+    while (pyonString.length > 0) {
+        if (finalDelimiterTokens.some(function (token, index) {
+            if (pyonString === token) {
+                dest.pushInt(index, 2);
+                pyonString = pyonString.slice(token.length);
+                return true;
+            } else {
+                return false;
+            }
+        })) continue;
+
+        var longestMatch = null, longestIndex = null;
+        delimiterTokens.forEach(function (token, index) {
+            if (pyonString.startsWith(token) && (!longestMatch || token.length > longestMatch.length)) {
+                longestMatch = token;
+                longestIndex = index;
+            }
+        });
+
+        pyonTokens.forEach(function (token, index) {
+            if (pyonString.startsWith(token) && (!longestMatch || token.length > longestMatch.length)) {
+                longestMatch = token;
+                longestIndex = index;
+            }
+        });
+
+        if (longestMatch) {
+            dest.pushInt(longestIndex, 2);
+            pyonString = pyonString.slice(longestMatch.length);
+            continue;
+        }
+
+        // if none matches
+        throw new Error('Unknown token');
+    }
+
+    return dest.toBuffer();
+}
+
 router.post('/encode', function (req, res, next) {
     if (!req.body || !req.body.text) {
         var err = new Error('You must specify text parameter');
@@ -283,7 +339,7 @@ router.post('/decode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass;
 
-    res.send(text);
+    res.send(depyonize(text).toJSON());
 });
 
 module.exports = router;
