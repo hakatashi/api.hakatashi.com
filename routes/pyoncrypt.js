@@ -181,6 +181,11 @@ var substitutionTable = [
      32,  25, 153, 171,  62, 158, 172, 254,
 ];
 
+var desubstitutionTable = new Array(substitutionTable.length);
+substitutionTable.forEach(function (record, index) {
+    desubstitutionTable[record] = index;
+});
+
 var permutationTable = [
     20, 14, 12, 19, 26,  7, 23, 18,
     10, 31,  3, 11, 27, 25,  6, 21,
@@ -219,6 +224,37 @@ function encryptBlock(buf, keys) {
     return buf;
 }
 
+function decrypt(buf, key) {
+    var keyHash = crypto.createHash('md5').update(key).digest();
+    var keys = [
+        new Buffer(keyHash.slice(0, 4)),
+        new Buffer(keyHash.slice(4, 8)),
+        new Buffer(keyHash.slice(8, 12)),
+        new Buffer(keyHash.slice(12, 16)),
+    ];
+    var dest = new Buffer(Math.ceil(buf.length / 4) * 4);
+
+    for (var ptr = 0; ptr < buf.length; ptr += 4) {
+        var block = new Buffer(4).fill(0);
+        buf.copy(block, 0, ptr, ptr + 4);
+        decryptBlock(block, keys).copy(dest, ptr);
+    }
+
+    return dest;
+}
+
+function decryptBlock(buf, keys) {
+    buf = xor(buf, keys[3]);
+    buf = desubstitutionPermutation(buf);
+    buf = xor(buf, keys[2]);
+    buf = desubstitutionPermutation(buf);
+    buf = xor(buf, keys[1]);
+    buf = desubstitutionPermutation(buf);
+    buf = xor(buf, keys[0]);
+
+    return buf;
+}
+
 function xor(buf1, buf2) {
     var length = Math.min(buf1.length, buf2.length);
     var dest = new Buffer(length).fill(0);
@@ -242,6 +278,22 @@ function substitutionPermutation(buf) {
         var bit = (buf[byteFrom] >> (7 - bitFrom % 8)) & 1;
         dest[byteTo] += bit << (7 - bitTo % 8);
     });
+
+    return dest;
+}
+
+function desubstitutionPermutation(buf) {
+    var dest = new Buffer(4).fill(0);
+    permutationTable.forEach(function (bitTo, bitFrom) {
+        var byteFrom = Math.floor(bitFrom / 8);
+        var byteTo = Math.floor(bitTo / 8);
+        var bit = (buf[byteTo] >> (7 - bitTo % 8)) & 1;
+        dest[byteFrom] += bit << (7 - bitFrom % 8);
+    });
+
+    for (var i = 0; i < dest.length; i++) {
+        dest[i] = desubstitutionTable[dest[i]];
+    }
 
     return dest;
 }
@@ -342,7 +394,7 @@ router.post('/decode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass;
 
-    res.send(depyonize(text).toJSON());
+    res.send(decrypt(depyonize(text), pass).toJSON());
 });
 
 module.exports = router;
