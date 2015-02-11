@@ -271,12 +271,14 @@ function pyonize(buf) {
 
 function depyonize(pyonString) {
     var dest = new BitArray();
+    var ptr = 0;
 
     while (pyonString.length > 0) {
         if (finalDelimiterTokens.some(function (token, index) {
             if (pyonString === token) {
                 dest.pushInt(index, 2);
                 pyonString = pyonString.slice(token.length);
+                ptr += token.length;
                 return true;
             } else {
                 return false;
@@ -301,11 +303,12 @@ function depyonize(pyonString) {
         if (longestMatch) {
             dest.pushInt(longestIndex, 2);
             pyonString = pyonString.slice(longestMatch.length);
+            ptr += longestMatch.length;
             continue;
         }
 
         // if none matches
-        throw new Error('Unknown token');
+        throw new Error('Unknown token at ' + ptr);
     }
 
     return dest.toBuffer();
