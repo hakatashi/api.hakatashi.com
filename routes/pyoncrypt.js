@@ -1,3 +1,5 @@
+var crypto = require('crypto');
+
 var express = require('express');
 var router = express.Router();
 
@@ -106,7 +108,7 @@ function serialize(text) {
         return chr(ord(match) - ord('ァ') + ord('ぁ'));
     });
 
-    // HalfWidth to FullWidth
+    // Fullwidth to Halfwidth
     text = text.replace(/[！-～]/g, function (match) {
         return chr(ord(match) - ord('！') + ord('!'));
     });
@@ -130,8 +132,104 @@ function serialize(text) {
     return bitArray.toBuffer();
 }
 
-function encrypt(buf) {
-    
+var substitutionTable = [
+    151, 135,  82, 190, 127, 177,  76, 137,
+    204,  54, 182, 145,  95,  74, 142, 115,
+    132, 136,  78, 233,  65,  64,  13, 126,
+    144,  44, 219,   6,  27, 214, 117,  87,
+     14, 225, 211,  88,  96,  35, 170,  28,
+    241,   1, 209, 231,  80,  47, 118, 178,
+    100,  98, 229,  67,  91, 129, 186,  85,
+     93,  81, 119, 110,  39, 163, 169, 192,
+    234,  86,  18, 122,  94, 242,  29, 201,
+    109, 152, 253, 212,  83, 133,  56,   4,
+    238, 222,  50, 205, 200, 168,  89,  84,
+    160, 104, 249, 251, 173, 213, 230,  73,
+    102, 239,  20,  37, 196, 218,  68, 108,
+    187, 180,  23, 155, 123, 175, 146, 184,
+     22, 103,  90,  41, 166,  60, 217, 185,
+      0,  63, 226,  34, 176, 246, 139,  30,
+     36, 188, 248, 101,   2,  16, 227,  19,
+    161,  21, 203,  49, 157,   7, 150,  61,
+    210,  15,  52, 114, 181,  58, 111, 221,
+     41, 245, 105,  45, 194,  75,  46, 174,
+    224,  17, 193, 116, 165, 125, 120, 244,
+    197, 121,   9, 240,  71, 228, 243, 140,
+    131, 198, 149,  70,  10, 164, 220,  69,
+    143,  59, 128,  53, 202, 106,  92, 195,
+    183, 235, 215, 112, 147, 252, 179, 130,
+     57, 156, 247, 236, 208,   3, 255,   8,
+    138,  51,  77, 148, 189,  24, 154, 124,
+    113, 199, 250, 107,  38, 162,  31, 216,
+     26, 191, 167, 207,  72,  33, 232,  66,
+      5,  40, 159,  55, 223,  42,  99,  97,
+     11, 134,  43,  48, 206,  12,  79, 237,
+     32,  25, 153, 171,  62, 158, 172, 254,
+];
+
+var permutationTable = [
+    20, 14, 12, 19, 26,  7, 23, 18,
+    10, 31,  3, 11, 27, 25,  6, 21,
+    16, 17, 13,  9, 29, 28, 15, 22,
+     1,  4, 24,  0, 30,  5,  2,  8,
+];
+
+function encrypt(buf, key) {
+    var keyHash = crypto.createHash('md5').update(key).digest();
+    var keys = [
+        new Buffer(keyHash.slice(0, 4)),
+        new Buffer(keyHash.slice(4, 8)),
+        new Buffer(keyHash.slice(8, 12)),
+        new Buffer(keyHash.slice(12, 16)),
+    ];
+    var dest = new Buffer(Math.ceil(buf.length / 4) * 4);
+
+    for (var ptr = 0; ptr < buf.length; ptr += 4) {
+        var block = new Buffer(4).fill(0);
+        buf.copy(block, 0, ptr, ptr + 4);
+        encryptBlock(block, keys).copy(dest, ptr);
+    }
+
+    return dest;
+}
+
+function encryptBlock(buf, keys) {
+    buf = xor(buf, keys[0]);
+    buf = substitutionPermutation(buf);
+    buf = xor(buf, keys[1]);
+    buf = substitutionPermutation(buf);
+    buf = xor(buf, keys[2]);
+    buf = substitutionPermutation(buf);
+    buf = xor(buf, keys[3]);
+
+    return buf;
+}
+
+function xor(buf1, buf2) {
+    var length = Math.min(buf1.length, buf2.length);
+    var dest = new Buffer(length).fill(0);
+
+    for (var i = 0; i < length; i++) {
+        dest[i] = buf1[i] ^ buf2[i];
+    }
+
+    return dest;
+}
+
+function substitutionPermutation(buf) {
+    for (var i = 0; i < buf.length; i++) {
+        buf[i] = substitutionTable[buf[i]];
+    }
+
+    var dest = new Buffer(4).fill(0);
+    permutationTable.forEach(function (bitTo, bitFrom) {
+        var byteFrom = Math.floor(bitFrom / 8);
+        var byteTo = Math.floor(bitTo / 8);
+        var bit = (buf[byteFrom] >> (7 - bitFrom % 8)) & 1;
+        dest[byteTo] += bit << (7 - bitTo % 8);
+    });
+
+    return dest;
 }
 
 router.post('/encode', function (req, res, next) {
@@ -144,7 +242,7 @@ router.post('/encode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass || config.defaultPass;
 
-    res.send(serialize(text).toJSON());
+    res.send(encrypt(serialize(text), pass).toJSON());
 });
 
 module.exports = router;
