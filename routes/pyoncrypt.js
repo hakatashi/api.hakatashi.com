@@ -486,7 +486,11 @@ router.post('/encode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass || config.defaultPass;
 
-    res.send(pyonize(encrypt(serialize(text), pass)));
+    var result = pyonize(encrypt(serialize(text), pass));
+    res.send(JSON.stringify({
+        result: result,
+        text: text
+    }));
 });
 
 router.post('/decode', function (req, res, next) {
@@ -504,7 +508,11 @@ router.post('/decode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass;
 
-    res.send(deserialize(decrypt(depyonize(text), pass)));
+    var result = deserialize(decrypt(depyonize(text), pass));
+    res.send(JSON.stringify({
+        result: result,
+        text: text
+    }));
 });
 
 module.exports = router;
