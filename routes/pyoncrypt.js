@@ -19,6 +19,32 @@ if (!String.prototype.startsWith) {
     });
 }
 
+// attach the .equals method to Array's prototype to call it on any array
+// http://stackoverflow.com/questions/7837456/
+Array.prototype.equals = function (array) {
+    // if the other array is a falsy value, return
+    if (!array)
+        return false;
+
+    // compare lengths - can save a lot of time
+    if (this.length != array.length)
+        return false;
+
+    for (var i = 0, l=this.length; i < l; i++) {
+        // Check if we have nested arrays
+        if (this[i] instanceof Array && array[i] instanceof Array) {
+            // recurse into the nested arrays
+            if (!this[i].equals(array[i]))
+                return false;
+        }
+        else if (this[i] != array[i]) {
+            // Warning - two different object instances will never be equal: {x:20} != {x:20}
+            return false;
+        }
+    }
+    return true;
+}
+
 var VOICED = 65536;
 var SEMIVOICED = 65537;
 var ALTER = 65538;
@@ -43,7 +69,7 @@ deserializationTable.forEach(function (char, index) {
     serializationTable[char] = index;
 });
 
-var sanitizationTable = {
+var conversionTable = {
     'が': [VOICED, 'か'],
     'ぎ': [VOICED, 'き'],
     'ぐ': [VOICED, 'く'],
@@ -78,17 +104,21 @@ var sanitizationTable = {
     'ゖ': [ALTER, 'け'],
     'ゎ': [ALTER, 'わ'],
     '…': [ALTER, 'ー'],
+};
+
+var sanitizationTable = {
     '　': [' '],
     '､':  ['、'],
     '｡':  ['。'],
 };
 
-var BitArray = function () {
+var BitQueue = function () {
     this._length = 0;
     this._buffer = new Buffer(0);
+    this._ptr = 0;
 };
 
-BitArray.prototype.pushInt = function (number, bit) {
+BitQueue.prototype.pushInt = function (number, bit) {
     this._length += bit;
 
     var appendBufferLength = Math.ceil(this._length / 8) - this._buffer.length;
@@ -107,9 +137,45 @@ BitArray.prototype.pushInt = function (number, bit) {
     return this;
 };
 
-BitArray.prototype.toBuffer = function () {
+BitQueue.prototype.pushBuffer = function (buf) {
+    this._buffer = Buffer.concat([this._buffer, buf]);
+    this._length = this._buffer.length * 8;
+
+    return this;
+};
+
+BitQueue.prototype.popInt = function (bit) {
+    var popByte = Math.floor(this._ptr / 8);
+    var popByteEnd = Math.ceil((this._ptr + bit) / 8);
+
+    function bitMask(bit) {
+        return (1 << bit) - 1;
+    }
+
+    var ret = 0;
+    var transcriptionPtr = 0;
+    for (var ptr = popByte; ptr < popByteEnd; ptr++) {
+        var bitStart = Math.max(ptr * 8, Math.min(this._ptr, (ptr + 1) * 8 - 1)) % 8;
+        var bitEnd = Math.max(ptr * 8, Math.min(this._ptr + bit - 1, (ptr + 1) * 8 - 1)) % 8;
+
+        var transcription = this._buffer[ptr] >> (7 - bitEnd) & bitMask(bitEnd - bitStart + 1);
+        transcriptionPtr += bitEnd - bitStart + 1;
+        ret += transcription << (bit - transcriptionPtr);
+    }
+
+    this._ptr += bit;
+    return ret;
+};
+
+BitQueue.prototype.toBuffer = function () {
     return new Buffer(this._buffer);
 };
+
+Object.defineProperty(BitQueue.prototype, 'length', {
+    get: function () {
+        return this._length - this._ptr;
+    }
+});
 
 function serialize(text) {
     var chr = String.fromCharCode;
@@ -130,20 +196,64 @@ function serialize(text) {
     var tokens = [];
 
     text.split('').forEach(function (char) {
-        if (sanitizationTable[char]) {
+        if (conversionTable[char]) {
+            tokens = tokens.concat(conversionTable[char]);
+        } else if (sanitizationTable[char]) {
             tokens = tokens.concat(sanitizationTable[char]);
         } else if (typeof serializationTable[char] !== 'undefined') {
             tokens.push(char);
         }
     });
 
-    var bitArray = new BitArray();
+    var bitQueue = new BitQueue();
 
     tokens.forEach(function (token) {
-        bitArray.pushInt(serializationTable[token], 6);
+        bitQueue.pushInt(serializationTable[token], 6);
     });
 
-    return bitArray.toBuffer();
+    return bitQueue.toBuffer();
+}
+
+function deserialize(buf) {
+    var queue = new BitQueue();
+    queue.pushBuffer(buf);
+
+    var tokens = [];
+
+    while (queue.length >= 6) {
+        var idx = queue.popInt(6);
+        tokens.push(deserializationTable[idx]);
+    }
+
+    var dest = '';
+
+    while (tokens.length > 0) {
+        var token = tokens[0];
+        if (token === null) {
+            tokens.shift();
+        } else if (typeof token === 'string') {
+            dest += token;
+            tokens.shift();
+        } else {
+            var isConverted = false;
+
+            for (var char in conversionTable) if (conversionTable.hasOwnProperty(char)) {
+                var record = conversionTable[char];
+                if (tokens.slice(0, record.length).equals(record)) {
+                    dest += char;
+                    tokens = tokens.slice(record.length);
+                    isConverted = true;
+                    break;
+                }
+            }
+
+            if (!isConverted) {
+                throw new Error('Unknown token');
+            }
+        }
+    }
+
+    return dest;
 }
 
 var substitutionTable = [
@@ -322,7 +432,7 @@ function pyonize(buf) {
 }
 
 function depyonize(pyonString) {
-    var dest = new BitArray();
+    var dest = new BitQueue();
     var ptr = 0;
 
     while (pyonString.length > 0) {
@@ -394,7 +504,7 @@ router.post('/decode', function (req, res, next) {
     var text = req.body.text;
     var pass = req.body.pass;
 
-    res.send(decrypt(depyonize(text), pass).toJSON());
+    res.send(deserialize(decrypt(depyonize(text), pass)));
 });
 
 module.exports = router;
