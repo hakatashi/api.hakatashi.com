@@ -1,0 +1,21 @@
+{
+	"port": 8080,
+	"pyoncrypt": {
+		"defaultPass": "xxxx"
+	},
+	"pixiv2kindle": {
+		"auth": "xxxx",
+		"pixiv": {
+			"user": "test@example.com",
+			"pass": "xxxx"
+		},
+		"kindle": {
+			"to": "test@example.com",
+			"from": "test@example.com"
+		},
+		"mailgun": {
+			"key": "key-xxxx",
+			"domain": "example.com"
+		}
+	}
+}
