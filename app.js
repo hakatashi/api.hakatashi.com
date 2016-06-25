@@ -7,7 +7,8 @@ var bodyParser = require('body-parser');
 
 var route = {
     index: require('./routes/index'),
-    pyoncrypt: require('./routes/pyoncrypt')
+    pyoncrypt: require('./routes/pyoncrypt'),
+    pixiv2kindle: require('./routes/pixiv2kindle')
 };
 
 var app = express();
@@ -28,6 +29,7 @@ app.use(function (req, res, next) {
 
 app.use('/', route.index);
 app.use('/pyoncrypt', route.pyoncrypt);
+app.use('/pixiv2kindle', route.pixiv2kindle);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
