@@ -116,9 +116,7 @@ router.post('/publish', (req, res, next) => {
                     throw error;
                 }
 
-                emitEvent({event: 'Retrieved Novel Data'});
-
-                console.log(data);
+                onData(data);
             });
         });
     } else {
@@ -136,19 +134,20 @@ router.post('/publish', (req, res, next) => {
                             throw error;
                         }
 
-                        emitEvent({event: 'Retrieved Novel Data'});
-
-                        console.log(data);
+                        onData(data);
                     });
                 });
                 return;
             }
 
-            emitEvent({event: 'Retrieved Novel Data'});
-
-            console.log(data);
-        })
+            onData(data);
+        });
     }
+
+    const onData = data => {
+        emitEvent({event: 'Retrieved Novel Data'});
+        res.end();
+    };
 });
 
 module.exports = router;
