@@ -18,6 +18,7 @@
     "kindlegen": "^1.0.1",
     "morgan": "~1.5.1",
     "pixiv-novel-parser": "^0.3.0",
+    "pixiv2html": "^1.1.0",
     "request": "^2.72.0",
     "serve-favicon": "~2.2.0",
     "tough-cookie-filestore": "0.0.1"
