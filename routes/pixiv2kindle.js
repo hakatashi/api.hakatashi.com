@@ -7,7 +7,7 @@ const fs = require('fs');
 
 const config = require('../config.json').pixiv2kindle;
 const jar = require('../libs/jar');
-const pixiv2epub = require('../libs/pixiv2epub');
+const Pixiv2Epub = require('../libs/pixiv2epub');
 
 const router = express.Router();
 
@@ -147,7 +147,12 @@ router.post('/publish', (req, res, next) => {
 
     const onData = data => {
         emitEvent({event: 'Retrieved Novel Data'});
-        res.end();
+
+        const epub = new Pixiv2Epub(data);
+        epub.on('event', (event) => emitEvent({event}));
+        epub.on('finish', () => {
+            res.end();
+        });
     };
 });
 
