@@ -72,7 +72,8 @@ const getData = (id, done) => {
 
         const title = $('section.work-info > .title').text();
         const author = $('.profile-unit .user').text();
-        const date = $('section.work-info > ul > li:nth-child(1)').text();
+        const dateString = $('section.work-info > ul > li:nth-child(1)').text();
+        const date = new Date(dateString.replace(/(年|月|日)/g, '-') + ' GMT+0900')
         const caption = entities.decodeHTML($('.work-info > .caption').html()).replace(/<br>/g, '\n');
 
         const tags = [];
