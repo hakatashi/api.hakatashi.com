@@ -5,12 +5,14 @@ const cheerio = require('cheerio');
 const entities = require('entities');
 const kindlegen = require('kindlegen');
 const fs = require('fs');
+const Mailgun = require('mailgun-js');
 
 const config = require('../config.json').pixiv2kindle;
 const jar = require('../libs/jar');
 const Pixiv2Epub = require('../libs/pixiv2epub');
 
 const router = express.Router();
+const mailgun = Mailgun({apiKey: config.mailgun.key, domain: config.mailgun.domain});
 
 const pixivLogin = done => {
     request({
@@ -180,12 +182,36 @@ router.post('/publish', (req, res, next) => {
             kindlegen(data, (error, mobi) => {
                 if (error) {
                     emitEvent({event: error, error: true});
-                    return;
+                    return res.end();
                 }
 
                 emitEvent({event: 'Converted to mobi'});
-                res.end();
+                sendMail(mobi);
             });
+        });
+    };
+
+    const sendMail = (mobi) => {
+        const attachment = new mailgun.Attachment({
+            data: mobi,
+            filename: `pixiv-${id}.mobi`,
+            contentType: 'application/x-mobipocket-ebook',
+        });
+
+        mailgun.messages().send({
+            from: `pixiv2kindle <${config.kindle.from}>`,
+            to: config.kindle.to,
+            subject: 'pixiv2kindle delivery',
+            text: 'This is an automatic content delivery from pixiv2kindle. Please contact hakatasiloving@gmail.com if you see something.',
+            attachment: attachment,
+        }, (error, body) => {
+            if (error) {
+                emitEvent({event: error, error: true});
+                return res.end();
+            }
+
+            emitEvent({event: 'Delivered Mail to Kindle'});
+            res.end();
         });
     };
 });
