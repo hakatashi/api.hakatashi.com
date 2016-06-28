@@ -90,9 +90,20 @@ const getData = (id, done) => {
             }
         })();
 
+        const sequence = (() => {
+            if ($series.length > 0) {
+                const $seriesItems = $series.children('li');
+                return $seriesItems.index($seriesItems.filter(
+                    (index, element) => $(element).text() === title
+                ).first()) + 1;
+            } else {
+                return 0;
+            }
+        })();
+
         const novel = $('#novel_text').text();
 
-        done(null, {id, title, author, date, caption, tags, series, novel});
+        done(null, {id, title, author, date, caption, tags, series, sequence, novel});
     });
 }
 
