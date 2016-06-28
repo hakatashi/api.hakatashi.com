@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const config = require('../config.json').pixiv2kindle;
 const jar = require('../libs/jar');
+const pixiv2epub = require('../libs/pixiv2epub');
 
 const router = express.Router();
 
