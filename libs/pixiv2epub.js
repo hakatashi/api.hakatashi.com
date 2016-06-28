@@ -1,5 +1,4 @@
 const pixiv2html = require('pixiv2html');
-const kindlegen = require('kindlegen');
 const EventEmitter = require('events');
 const nodepub = require('nodepub');
 const path = require('path');
@@ -19,7 +18,7 @@ class Pixiv2Epub extends EventEmitter {
 				if (error) {
 					this.emit('error', error);
 				} else {
-					this.emit('finish');
+					this.emit('finish', this.epub);
 				}
 			});
 		});

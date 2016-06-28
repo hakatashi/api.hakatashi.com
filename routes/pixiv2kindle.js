@@ -3,6 +3,7 @@ const csvStringify = require('csv-stringify');
 const request = require('request');
 const cheerio = require('cheerio');
 const entities = require('entities');
+const kindlegen = require('kindlegen');
 const fs = require('fs');
 
 const config = require('../config.json').pixiv2kindle;
@@ -174,8 +175,17 @@ router.post('/publish', (req, res, next) => {
 
         const epub = new Pixiv2Epub(data);
         epub.on('event', (event) => emitEvent({event}));
-        epub.on('finish', () => {
-            res.end();
+        epub.on('error', (error) => emitEvent({event: error, error: true}));
+        epub.on('finish', (data) => {
+            kindlegen(data, (error, mobi) => {
+                if (error) {
+                    emitEvent({event: error, error: true});
+                    return;
+                }
+
+                emitEvent({event: 'Converted to mobi'});
+                res.end();
+            });
         });
     };
 });
