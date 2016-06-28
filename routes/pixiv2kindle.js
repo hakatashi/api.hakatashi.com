@@ -74,13 +74,25 @@ const getData = (id, done) => {
         const author = $('.profile-unit .user').text();
         const date = $('section.work-info > ul > li:nth-child(1)').text();
         const caption = entities.decodeHTML($('.work-info > .caption').html()).replace(/<br>/g, '\n');
+
         const tags = [];
         $('li.tag > .text').each((index, element) => {
             tags.push($(element).text());
         });
+
+        const $series = $('.area_new .type-series');
+        const series = (() => {
+            if ($series.length > 0) {
+                const $seriesArea = $series.parent().parent();
+                return $seriesArea.find('h3').text();
+            } else {
+                return '';
+            }
+        })();
+
         const novel = $('#novel_text').text();
 
-        done(null, {title, author, date, caption, tags, novel});
+        done(null, {id, title, author, date, caption, tags, series, novel});
     });
 }
 
