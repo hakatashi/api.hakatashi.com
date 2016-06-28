@@ -12,7 +12,6 @@ class Pixiv2Epub extends EventEmitter {
 		this.data = data;
 
 		process.nextTick(() => {
-			this.emit('event', 'Loaded Novel Text');
 			this.parse2html();
 			this.html2epub((error) => {
 				if (error) {
@@ -57,8 +56,6 @@ class Pixiv2Epub extends EventEmitter {
 			if (error) {
 				return done(error);
 			}
-
-			this.emit('event', 'Created Temp Dir to Write EPUB in');
 
 			const onError = (error) => {
 				done(error);
