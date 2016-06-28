@@ -3,6 +3,8 @@ const kindlegen = require('kindlegen');
 const EventEmitter = require('events');
 const nodepub = require('nodepub');
 const path = require('path');
+const temp = require('temp');
+const fs = require('fs');
 
 class Pixiv2Epub extends EventEmitter {
 	constructor(data) {
@@ -24,7 +26,7 @@ class Pixiv2Epub extends EventEmitter {
 	}
 
 	parse2html() {
-		this.htmls = pixiv2html(this.data.novel);
+		this.htmls = pixiv2html(this.data.novel, {type: 'xhtml'});
 		this.emit('event', 'Converted to HTML');
 	}
 
@@ -52,14 +54,32 @@ class Pixiv2Epub extends EventEmitter {
 			epub.addSection(`第${index + 1}章`, html);
 		});
 
-		const onError = (error) => {
-			done(error);
-		};
-		const onSuccess = () => {
-			done();
-		};
+		temp.mkdir('pixiv2kindle', (error, dirPath) => {
+			if (error) {
+				return done(error);
+			}
 
-		epub.writeEPUB(onError, path.resolve(__dirname, '../assets'), 'test', onSuccess);
+			this.emit('event', 'Created Temp Dir to Write EPUB in');
+
+			const onError = (error) => {
+				done(error);
+			};
+			const onSuccess = () => {
+				this.emit('event', 'Created EPUB File');
+
+				fs.readFile(path.resolve(dirPath, 'out.epub'), (error, data) => {
+					if (error) {
+						done(error);
+					} else {
+						this.epub = data;
+						this.emit('event', 'Retrieved EPUB data');
+						done();
+					}
+				});
+			};
+
+			epub.writeEPUB(onError, dirPath, 'out', onSuccess);
+		});
 	}
 }
 
