@@ -21,6 +21,7 @@
     "pixiv2html": "^1.2.0",
     "request": "^2.72.0",
     "serve-favicon": "~2.2.0",
+    "temp": "^0.8.3",
     "tough-cookie-filestore": "0.0.1"
   }
 }
