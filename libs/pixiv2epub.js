@@ -52,6 +52,8 @@ class Pixiv2Epub extends EventEmitter {
 			epub.addSection(`第${index + 1}章`, html);
 		});
 
+		epub.addCSS('body {writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;} p {margin: 0;}')
+
 		temp.mkdir('pixiv2kindle', (error, dirPath) => {
 			if (error) {
 				return done(error);
