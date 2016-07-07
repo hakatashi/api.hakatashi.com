@@ -24,7 +24,7 @@ class Pixiv2Epub extends EventEmitter {
 	}
 
 	parse2html() {
-		this.htmls = pixiv2html(this.data.novel, {type: 'xhtml'});
+		this.chapters = pixiv2html(this.data.novel, {type: 'xhtml'});
 		this.emit('event', 'Converted to HTML');
 	}
 
@@ -48,7 +48,7 @@ class Pixiv2Epub extends EventEmitter {
 			images: [],
 		}, path.resolve(__dirname, '../assets/pixiv2kindle/cover.png'));
 
-		this.htmls.forEach((html, index) => {
+		this.chapters.forEach((html, index) => {
 			epub.addSection(`第${index + 1}章`, html);
 		});
 
