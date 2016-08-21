@@ -5,12 +5,26 @@ const request = require('request');
 
 const config = require('../config.json').sos;
 
+const ipTable = Object.create(null);
+
 router.post('/send', function (req, res, next) {
     if (!req.body) {
         const error = new Error('Empty body');
         error.status = 422;
         return next(error);
     }
+
+    const requestCount = ipTable[req.ip] || 0;
+    if (requestCount >= 3) {
+        const error = new Error('SOS request is restricted to 3 times per day');
+        error.status = 429;
+        return next(error);
+    }
+
+    ipTable[req.ip] = requestCount + 1;
+    setTimeout(() => {
+        ipTable[req.ip]--;
+    }, 24 * 60 * 60 * 1000);
 
     const key = req.body.key;
     const text = req.body.text || '';
