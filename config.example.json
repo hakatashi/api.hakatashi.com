@@ -17,5 +17,12 @@
 			"key": "key-xxxx",
 			"domain": "example.com"
 		}
+	},
+	"sos": {
+		"key": "xxxx",
+		"pushbullet": {
+			"key": "xxxx",
+			"eventName": "xxxx"
+		}
 	}
 }
