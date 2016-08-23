@@ -14,6 +14,8 @@ var route = {
 
 var app = express();
 
+app.enable('trust proxy');
+
 app.set('views', __dirname + '/views');
 app.engine('html', require('ejs').renderFile);
 
