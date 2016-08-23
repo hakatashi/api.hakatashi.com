@@ -8,6 +8,8 @@ const config = require('../config.json').sos;
 const ipTable = Object.create(null);
 
 router.post('/send', function (req, res, next) {
+    res.set('Access-Control-Allow-Origin', 'https://sos.hakatashi.com');
+
     if (!req.body) {
         const error = new Error('Empty body');
         error.status = 422;
@@ -62,7 +64,6 @@ router.post('/send', function (req, res, next) {
         errors[type] = error.message;
     }).then(() => {
         res.set('Content-Type', 'application/json');
-        res.set('Access-Control-Allow-Origin', 'https://sos.hakatashi.com');
         res.send(JSON.stringify({
             status: 200,
             errors,
