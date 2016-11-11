@@ -57,14 +57,80 @@ const pixivLogin = done => {
     });
 };
 
+const getWhitecubeData = (id, done) => {
+    request({
+        jar,
+        json: true,
+        method: 'GET',
+        followRedirect: false,
+        url: `https://www.pixiv.net/rpc/whitecube/index.php?mode=novel_details_modal_whitecube&id=${id}`,
+    }, (error, response, data) => {
+        if (error) {
+            return done(error);
+        }
+
+        if (response.statusCode !== 200) {
+            return done(new Error(`Status code ${response.statusCode}`));
+        }
+
+        const body = data.body.html;
+
+        const $ = cheerio.load(body);
+
+        const title = $('.title-container > ._title').text();
+        const author = $('.user-name.user-view-popup').text();
+        const dateString = $('.datetime').text();
+        const date = new Date(dateString.replace(/日/g, '').replace(/(年|月)/g, '-') + ' GMT+0900')
+        const caption = entities.decodeHTML($('.description-text').html()).replace(/<br>/g, '\n');
+
+        const tags = [];
+        $('.work-info-container > .tags > .tag').each((index, element) => {
+            tags.push($(element).text());
+        });
+
+        const $series = $('.series-list');
+        const series = (() => {
+            if ($series.length > 0) {
+                return $('.series-title > a').text();
+            } else {
+                return '';
+            }
+        })();
+
+        const sequence = (() => {
+            if ($series.length > 0) {
+                const $seriesItems = $series.children('li');
+                return $seriesItems.index($seriesItems.filter(
+                    (index, element) => $(element).text() === title
+                ).first()) + 1;
+            } else {
+                return 0;
+            }
+        })();
+
+        const novel = $('#novel_text').text();
+
+        done(null, {id, title, author, date, caption, tags, series, sequence, novel});
+    });
+}
+
 const getData = (id, done) => {
     request({
         jar,
         method: 'GET',
+        followRedirect: false,
         url: `http://www.pixiv.net/novel/show.php?id=${id}`,
     }, (error, response, body) => {
-        if (error || response.statusCode !== 200) {
+        if (error) {
             return done(error);
+        }
+
+        if (response.statusCode === 302 && response.headers.location.match('whitecube')) {
+            return getWhitecubeData(id, done);
+        }
+
+        if (response.statusCode !== 200) {
+            return done(new Error(`Status code ${response.statusCode}`));
         }
 
         const $ = cheerio.load(body);
