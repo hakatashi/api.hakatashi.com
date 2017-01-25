@@ -1,5 +1,7 @@
 # api.hakatashi.com
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/hakatashi/api.hakatashi.com.svg)](https://greenkeeper.io/)
+
 [![Dependency Status](https://gemnasium.com/hakatashi/api.hakatashi.com.svg)](https://gemnasium.com/hakatashi/api.hakatashi.com)
 
 ## Documentation
