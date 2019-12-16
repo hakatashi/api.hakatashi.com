@@ -42,8 +42,8 @@ const CSS = `
 	}
 
 	.caption-page {
-		writing-mode: horizontal-tb;
-		-webkit-writing-mode: horizontal-tb;
+		writing-mode: vertical-rl;
+		-webkit-writing-mode: vertical-rl;
 	}
 
 	.tags {
@@ -104,7 +104,7 @@ class Pixiv2Epub extends EventEmitter {
 			contents: '目次',
 			source: `http://www.pixiv.net/novel/show.php?id=${this.data.id}`,
 			images: [],
-		}, path.resolve(__dirname, '../assets/pixiv2kindle/cover.png'));
+		}, path.resolve(__dirname, '../assets/pixiv2kindle/cover.jpg'));
 
 		epub.addSection(`扉`, titlePage({
 			title: this.data.title,
