@@ -1,10 +1,10 @@
-const pixiv2html = require('pixiv2html');
 const EventEmitter = require('events');
-const nodepub = require('nodepub');
-const path = require('path');
-const temp = require('temp');
 const fs = require('fs');
+const path = require('path');
 const html = require('html-template-tag');
+const nodepub = require('nodepub');
+const pixiv2html = require('pixiv2html');
+const temp = require('temp');
 
 const titlePage = ({title, author}) => html`
 	<div class="title-page">
@@ -17,7 +17,7 @@ const captionPage = ({title, caption, tags}) => html`
 	<div class="caption-page">
 		<h2 class="title">${title}</h2>
 		<ul class="tags">
-			${tags.map(tag => html`
+			${tags.map((tag) => html`
 				<li class="tag">${tag}</li>
 			`)}
 		</ul>
@@ -106,12 +106,12 @@ class Pixiv2Epub extends EventEmitter {
 			images: [],
 		}, path.resolve(__dirname, '../assets/pixiv2kindle/cover.jpg'));
 
-		epub.addSection(`扉`, titlePage({
+		epub.addSection('扉', titlePage({
 			title: this.data.title,
 			author: this.data.author,
 		}));
 
-		epub.addSection(`キャプション`, captionPage({
+		epub.addSection('キャプション', captionPage({
 			title: this.data.title,
 			caption: this.data.caption,
 			date: this.data.date,
