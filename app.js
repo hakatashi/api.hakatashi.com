@@ -1,16 +1,12 @@
 const http = require('http');
-const path = require('path');
 const bodyParser = require('body-parser');
 const express = require('express');
 const logger = require('morgan');
-const favicon = require('serve-favicon');
-
-const route = {
-	index: require('./routes/index'),
-	pyoncrypt: require('./routes/pyoncrypt'),
-	pixiv2kindle: require('./routes/pixiv2kindle'),
-	sos: require('./routes/sos'),
-};
+const index = require('./routes/index');
+const pyoncrypt = require('./routes/pyoncrypt');
+const pixiv2kindle = require('./routes/pixiv2kindle');
+const sos = require('./routes/sos');
+const pixivwall = require('./routes/pixivwall');
 
 const app = express();
 
@@ -30,10 +26,11 @@ app.use((req, res, next) => {
 	return next();
 });
 
-app.use('/', route.index);
-app.use('/pyoncrypt', route.pyoncrypt);
-app.use('/pixiv2kindle', route.pixiv2kindle);
-app.use('/sos', route.sos);
+app.use('/', index);
+app.use('/pyoncrypt', pyoncrypt);
+app.use('/pixiv2kindle', pixiv2kindle);
+app.use('/sos', sos);
+app.use('/pixivwall', pixivwall);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -46,7 +43,7 @@ app.use((req, res, next) => {
 
 // production error handler
 // no stacktraces leaked to user
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
 	const status = err.status || 500;
 	res.status(status);
 	res.set('Content-Type', 'application/json');

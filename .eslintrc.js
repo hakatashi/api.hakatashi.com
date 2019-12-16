@@ -10,6 +10,9 @@ module.exports = {
 	rules: {
 		'node/no-unsupported-features': 'off',
 		'node/no-unsupported-features/es-syntax': 'off',
+		'array-plural/array-plural': ['error', {
+			allows: ['array', 'list', 'group', 'table'],
+		}],
 	},
 	globals: {},
 };
