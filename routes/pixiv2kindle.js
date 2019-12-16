@@ -11,8 +11,32 @@ const config = require('../config.json').pixiv2kindle;
 const jar = require('../libs/jar');
 const Pixiv2Epub = require('../libs/pixiv2epub');
 
+const pixiv2text = ({ novel, title, author, date, caption, tags }) => {
+    novel = novel.replace(/《/g, '≪').replace(/》/g, '≫');
+    novel = novel.replace(/､/g, '、').replace(/｡/g, '。');
+    novel = novel.replace(/｢/g, '「').replace(/｣/g, '」');
+    novel = novel.replace(/\)/g, '）').replace(/\(/g, '（');
+    novel = novel.replace(/!/g, '！').replace(/\?/g, '？');
+    novel = novel.replace(/([！？]+)([^！？」』）\s])/g, '$1　$2');
+    novel = novel.replace(/([！？]{2,})/g, '［＃縦中横］$1［＃縦中横終わり］');
+    novel = novel.replace(/\[\[rb:(.+?)\s*>\s*(.+?)\]\]/g, '｜$1《$2》');
+    novel = novel.replace(/\[chapter:(.+?)\]/g, '［＃中見出し］$1［＃中見出し終わり］');
+    novel = novel.replace(/\[newpage\]/g, '［＃改ページ］');
+
+    const compiled = `
+        ${title}
+        ${author}
+        ${date}
+        ${caption}
+        ${tags.join('、')}
+        ――――――――――
+        ${novel}
+    `.replace(/^\n/, '').replace(/^ +/mg, '');
+    return compiled;
+};
+
 const router = express.Router();
-const mailgun = Mailgun({apiKey: config.mailgun.key, domain: config.mailgun.domain});
+const mailgun = Mailgun({ apiKey: config.mailgun.key, domain: config.mailgun.domain });
 
 const pixivLogin = done => {
     request({
@@ -110,7 +134,7 @@ const getWhitecubeData = (id, done) => {
 
         const novel = $('#novel_text').text();
 
-        done(null, {id, title, author, date, caption, tags, series, sequence, novel});
+        done(null, { id, title, author, date, caption, tags, series, sequence, novel });
     });
 }
 
@@ -119,8 +143,8 @@ const getData = (id, done) => {
         jar,
         method: 'GET',
         followRedirect: false,
-        url: `http://www.pixiv.net/novel/show.php?id=${id}`,
-    }, (error, response, body) => {
+        url: `https://www.pixiv.net/ajax/novel/${id}`,
+    }, async (error, response, body) => {
         if (error) {
             return done(error);
         }
@@ -133,47 +157,33 @@ const getData = (id, done) => {
             return done(new Error(`Status code ${response.statusCode}`));
         }
 
-        const $ = cheerio.load(body);
+        const data = JSON.parse(body);
 
-        if ($('body').hasClass('not-logged-in')) {
-            return done(new Error('Not logged in'));
-        }
+        const title = data.body.title;
+        const author = await new Promise((resolve, reject) => {
+            request({
+                method: 'GET',
+                url: `https://www.pixiv.net/member.php?id=${data.body.userId}`,
+                followRedirect: false,
+            }, (error, response, body) => {
+                if (error) {
+                    return reject(error);
+                }
 
-        const title = $('section.work-info > .title').text();
-        const author = $('.profile-unit .user').text();
-        const dateString = $('section.work-info > ul > li:nth-child(1)').text();
-        const date = new Date(dateString.replace(/(年|月|日)/g, '-') + ' GMT+0900')
-        const caption = entities.decodeHTML($('.work-info > .caption').html()).replace(/<br>/g, '\n');
-
-        const tags = [];
-        $('li.tag > .text').each((index, element) => {
-            tags.push($(element).text());
+                const $ = cheerio.load(body);
+                return resolve($('title').text().replace(/^.*「(.+?)」.*$/, '$1'));
+            });
         });
+        const date = new Date(data.body.createDate);
+        const caption = data.body.description;
 
-        const $series = $('.area_new .type-series');
-        const series = (() => {
-            if ($series.length > 0) {
-                const $seriesArea = $series.parent().parent();
-                return $seriesArea.find('h3').text();
-            } else {
-                return '';
-            }
-        })();
+        const tags = data.body.tags.tags.map(({ tag }) => tag);
 
-        const sequence = (() => {
-            if ($series.length > 0) {
-                const $seriesItems = $series.children('li');
-                return $seriesItems.index($seriesItems.filter(
-                    (index, element) => $(element).text() === title
-                ).first()) + 1;
-            } else {
-                return 0;
-            }
-        })();
+        const series = data.body.seriesNavData ? data.body.seriesNavData.title : '';
+        const sequence = data.body.seriesNavData ? data.body.seriesNavData.order : 0;
+        const novel = data.body.content;
 
-        const novel = $('#novel_text').text();
-
-        done(null, {id, title, author, date, caption, tags, series, sequence, novel});
+        done(null, { id, title, author, date, caption, tags, series, sequence, novel });
     });
 }
 
@@ -186,7 +196,7 @@ router.post('/publish', (req, res, next) => {
         stringifier.write([JSON.stringify(event)]);
     }
 
-    emitEvent({event: 'Remote App Started'});
+    emitEvent({ event: 'Remote App Started' });
 
     const cookies = jar.getCookies('http://www.pixiv.net/');
     const isLoggedIn = cookies.find(cookie => cookie.key === 'PHPSESSID') !== undefined;
@@ -203,7 +213,7 @@ router.post('/publish', (req, res, next) => {
                 throw error;
             }
 
-            emitEvent({event: 'Logged in to pixiv'});
+            emitEvent({ event: 'Logged in to pixiv' });
 
             getData(id, (error, data) => {
                 if (error) {
@@ -221,7 +231,7 @@ router.post('/publish', (req, res, next) => {
                         throw error;
                     }
 
-                    emitEvent({event: 'Logged in to pixiv'});
+                    emitEvent({ event: 'Logged in to pixiv' });
 
                     getData(id, (error, data) => {
                         if (error) {
@@ -239,20 +249,25 @@ router.post('/publish', (req, res, next) => {
     }
 
     const onData = data => {
-        emitEvent({event: 'Retrieved Novel Data'});
+        emitEvent({ event: 'Retrieved Novel Data' });
+        const filename = `${id}_${data.title.replace(/[/\\?%*:|"<>]/g, '-')}`;
+        fs.writeFileSync(`${filename}.txt`, pixiv2text(data));
 
         const epub = new Pixiv2Epub(data);
-        epub.on('event', (event) => emitEvent({event}));
-        epub.on('error', (error) => emitEvent({event: error, error: true}));
+        epub.on('event', (event) => emitEvent({ event }));
+        epub.on('error', (error) => emitEvent({ event: error, error: true }));
         epub.on('finish', (data) => {
+            fs.writeFileSync(`${filename}.epub`, data);
             kindlegen(data, (error, mobi) => {
                 if (error) {
-                    emitEvent({event: error, error: true});
+                    emitEvent({ event: error, error: true });
                     return res.end();
                 }
 
-                emitEvent({event: 'Converted to mobi'});
-                sendMail(mobi);
+                emitEvent({ event: 'Converted to mobi' });
+                fs.writeFileSync(`${filename}.mobi`, mobi);
+                res.end('ok');
+                next(null)
             });
         });
     };
@@ -272,11 +287,11 @@ router.post('/publish', (req, res, next) => {
             attachment: attachment,
         }, (error, body) => {
             if (error) {
-                emitEvent({event: error, error: true});
+                emitEvent({ event: error, error: true });
                 return res.end();
             }
 
-            emitEvent({event: 'Delivered Mail to Kindle'});
+            emitEvent({ event: 'Delivered Mail to Kindle' });
             res.end();
         });
     };
