@@ -10,7 +10,7 @@
     "@hakatashi/eslint-config": "^1.11.1",
     "body-parser": "~1.19.0",
     "cheerio": "^0.22.0",
-    "csv-stringify": "^5.3.4",
+    "csv-stringify": "^5.5.1",
     "debug": "~4.1.1",
     "ejs": "^3.0.1",
     "entities": "^2.0.0",
