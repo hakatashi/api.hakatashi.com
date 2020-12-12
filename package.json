@@ -18,7 +18,7 @@
     "express": "~4.17.1",
     "html-template-tag": "^3.2.0",
     "kindlegen": "^1.1.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.19",
     "mailgun-js": "^0.22.0",
     "morgan": "~1.9.1",
     "nodepub": "^2.1.1",
@@ -26,7 +26,7 @@
     "pug": "^2.0.4",
     "request": "^2.88.0",
     "serve-favicon": "~2.5.0",
-    "temp": "^0.9.1",
+    "temp": "^0.9.4",
     "tough-cookie-filestore": "0.0.1"
   }
 }
