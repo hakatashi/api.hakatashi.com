@@ -20,7 +20,7 @@
     "kindlegen": "^1.1.0",
     "lodash": "^4.17.20",
     "mailgun-js": "^0.22.0",
-    "morgan": "~1.9.1",
+    "morgan": "~1.10.0",
     "nodepub": "^2.1.1",
     "pixiv2html": "^2.0.0",
     "pug": "^2.0.4",
