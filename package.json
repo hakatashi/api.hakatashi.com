@@ -23,7 +23,7 @@
     "morgan": "~1.10.0",
     "nodepub": "^2.1.1",
     "pixiv2html": "^2.0.0",
-    "pug": "^2.0.4",
+    "pug": "^3.0.1",
     "request": "^2.88.2",
     "serve-favicon": "~2.5.0",
     "temp": "^0.9.4",
