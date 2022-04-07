@@ -21,7 +21,7 @@
     "lodash": "^4.17.21",
     "mailgun-js": "^0.22.0",
     "morgan": "~1.10.0",
-    "nodepub": "^2.1.1",
+    "nodepub": "^3.0.0",
     "pixiv2html": "^2.0.0",
     "pug": "^3.0.2",
     "request": "^2.88.2",
