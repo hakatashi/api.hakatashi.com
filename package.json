@@ -7,7 +7,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "@hakatashi/eslint-config": "^1.15.0",
+    "@hakatashi/eslint-config": "^1.18.0",
     "body-parser": "~1.19.2",
     "cheerio": "^0.22.0",
     "csv-stringify": "^6.0.5",
