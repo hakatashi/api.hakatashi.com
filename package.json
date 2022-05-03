@@ -16,7 +16,7 @@
     "entities": "^4.3.0",
     "eslint": "^8.7.0",
     "express": "~4.17.2",
-    "html-template-tag": "^4.0.0",
+    "html-template-tag": "^4.0.1",
     "kindlegen": "^1.1.0",
     "lodash": "^4.17.21",
     "mailgun-js": "^0.22.0",
