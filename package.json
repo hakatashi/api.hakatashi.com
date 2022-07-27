@@ -14,7 +14,7 @@
     "debug": "~4.3.4",
     "ejs": "^3.1.8",
     "entities": "^4.3.1",
-    "eslint": "^8.18.0",
+    "eslint": "^8.19.0",
     "express": "~4.17.2",
     "html-template-tag": "^4.0.1",
     "kindlegen": "^1.1.0",
