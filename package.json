@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@hakatashi/eslint-config": "^1.19.0",
-    "body-parser": "~1.20.1",
+    "body-parser": "~1.20.2",
     "cheerio": "^1.0.0-rc.12",
     "csv-stringify": "^6.2.0",
     "debug": "~4.3.4",
