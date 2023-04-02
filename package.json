@@ -12,7 +12,7 @@
     "cheerio": "^1.0.0-rc.12",
     "csv-stringify": "^6.2.0",
     "debug": "~4.3.4",
-    "ejs": "^3.1.8",
+    "ejs": "^3.1.9",
     "entities": "^4.4.0",
     "eslint": "^8.23.1",
     "express": "~4.17.3",
