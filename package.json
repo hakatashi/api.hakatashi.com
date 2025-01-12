@@ -13,7 +13,7 @@
     "csv-stringify": "^6.2.0",
     "debug": "~4.3.7",
     "ejs": "^3.1.10",
-    "entities": "^5.0.0",
+    "entities": "^6.0.0",
     "eslint": "^9.0.0",
     "express": "~4.21.2",
     "html-template-tag": "^4.1.0",
