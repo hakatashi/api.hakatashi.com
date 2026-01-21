@@ -18,7 +18,7 @@
     "express": "~4.21.2",
     "html-template-tag": "^4.1.0",
     "kindlegen": "^1.1.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "mailgun-js": "^0.22.0",
     "morgan": "~1.10.1",
     "nodepub": "^3.0.8",
